@@ -25,8 +25,9 @@ export default function App() {
   const [padding, setPadding] = useState(48);
   const [fontSize, setFontSize] = useState(18);
   const [watermark, setWatermark] = useState('@myhandle');
+  const [watermarkOpacity, setWatermarkOpacity] = useState(70);
   const [isExporting, setIsExporting] = useState(false);
-
+const [syntaxTheme, setSyntaxTheme] = useState('dracula');
   // Derive slides array automatically when code or slider changes
   const slides = useMemo(() => splitCodeIntoSlides(code, linesPerSlide), [code, linesPerSlide]);
 
@@ -116,7 +117,9 @@ export default function App() {
 
             <div className="space-y-4">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Theme & Style</h2>
-              <div className="grid grid-cols-2 gap-2">
+              
+              {/* Outer Wrapper Theme Grid */}
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
                   { id: 'minimalist', name: 'Minimalist' }, { id: 'glassmorphism', name: 'Glass' },
                   { id: 'brutalist', name: 'Brutalist', pro: true }, { id: 'cyberpunk', name: 'Cyberpunk', pro: true },
@@ -127,16 +130,47 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <select value={frame} onChange={(e) => setFrame(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="macos">macOS Dots</option>
-                <option value="windows">Windows 95</option>
-                <option value="clean">Clean Border</option>
-                <option value="none">No Frame</option>
-              </select>
-            </div>
 
+              {/* NEW: Syntax Theme Dropdown (VS Code Themes) */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Syntax Theme</label>
+                <select value={syntaxTheme} onChange={(e) => setSyntaxTheme(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                  <optgroup label="Dark Themes">
+                    <option value="dark-plus">Dark+ (VS Code)</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="dracula-soft">Dracula Soft</option>
+                    <option value="github-dark">GitHub Dark</option>
+                    <option value="github-dark-dimmed">GitHub Dark Dimmed</option>
+                    <option value="material-theme">Material Theme</option>
+                    <option value="material-theme-darker">Material Theme Darker</option>
+                    <option value="material-theme-ocean">Material Theme Ocean</option>
+                    <option value="material-theme-palenight">Material Theme Palenight</option>
+                    <option value="nord">Nord</option>
+                    <option value="one-dark-pro">One Dark Pro</option>
+                  </optgroup>
+                  <optgroup label="Light Themes">
+                    <option value="light-plus">Light+ (VS Code)</option>
+                    <option value="github-light">GitHub Light</option>
+                    <option value="material-theme-lighter">Material Theme Lighter</option>
+                    <option value="min-light">Min Light</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Frame Style Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Window Frame</label>
+                <select value={frame} onChange={(e) => setFrame(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="macos">macOS Dots</option>
+                  <option value="windows">Windows 95</option>
+                  <option value="clean">Clean Border</option>
+                  <option value="none">No Frame</option>
+                </select>
+              </div>
+            </div>
             <div className="space-y-4">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Layout & Branding</h2>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-slate-700 mb-1 block">Padding: {padding}px</label>
@@ -147,6 +181,13 @@ export default function App() {
                   <input type="range" min="12" max="24" step="1" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-full accent-indigo-600" />
                 </div>
               </div>
+              
+              {/* Opacity Slider */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1 block">Watermark Opacity: {watermarkOpacity}%</label>
+                <input type="range" min="0" max="100" step="5" value={watermarkOpacity} onChange={(e) => setWatermarkOpacity(Number(e.target.value))} className="w-full accent-indigo-600" />
+              </div>
+
               <input type="text" value={watermark} onChange={(e) => setWatermark(e.target.value)} placeholder="@username" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
 
@@ -165,12 +206,14 @@ export default function App() {
                   codeChunk={chunk}
                   language={language}
                   theme={theme}
+                  syntaxTheme={syntaxTheme}
                   frame={frame}
                   fontSize={fontSize}
                   padding={padding}
                   pageIndex={index + 1}
                   totalPages={slides.length}
                   watermark={watermark}
+                  watermarkOpacity={watermarkOpacity}
                 />
               </div>
             ))}
