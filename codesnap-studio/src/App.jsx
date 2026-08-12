@@ -1,8 +1,9 @@
 // src/App.jsx
 import { useState, useMemo } from 'react';
-import { Download, LayoutTemplate, LogIn, Loader2, Crown } from 'lucide-react';
+import { Download, LayoutTemplate, LogIn, Loader2, Crown, FileText, Images } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
+import JSZip from 'jszip';
 import { splitCodeIntoSlides } from './utils/splitCode';
 import SlideCard from './components/SlideCard';
 
@@ -62,6 +63,7 @@ export default function App() {
   const [watermark, setWatermark] = useState('@myhandle');
   const [watermarkOpacity, setWatermarkOpacity] = useState(70);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingImages, setIsExportingImages] = useState(false);
 const [syntaxTheme, setSyntaxTheme] = useState('dracula');
   // Derive slides array automatically when code or slider changes
   const slides = useMemo(() => splitCodeIntoSlides(code, linesPerSlide), [code, linesPerSlide]);
@@ -95,9 +97,43 @@ const [syntaxTheme, setSyntaxTheme] = useState('dracula');
       setIsExporting(false);
     }
   };
-
+  const exportAsImagesZip = async () => {
+    setIsExportingImages(true);
+    try {
+      const zip = new JSZip();
+      const slideElements = document.querySelectorAll('.carousel-slide-export');
+      
+      for (let i = 0; i < slideElements.length; i++) {
+        const el = slideElements[i];
+        
+        // Render high-res PNG
+        const dataUrl = await toPng(el, { quality: 1, pixelRatio: 2 });
+        
+        // html-to-image outputs a data URL (e.g., data:image/png;base64,iVBORw0KGgo...). 
+        // JSZip needs just the raw base64 string, so we strip the prefix.
+        const base64Data = dataUrl.replace(/^data:image\/(png|jpeg);base64,/, "");
+        
+        // Add the image to the zip file
+        zip.file(`codesnap-slide-${i + 1}.png`, base64Data, { base64: true });
+      }
+      
+      // Generate the ZIP file as a blob and download it
+      const content = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = `codesnap-carousel-${Date.now()}.zip`;
+      link.click();
+      
+    } catch (error) {
+      console.error('ZIP Export failed:', error);
+      alert('Failed to export ZIP file.');
+    } finally {
+      setIsExportingImages(false);
+    }
+  };
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
+      {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 shadow-sm z-10 shrink-0">
         <div className="flex items-center gap-2">
           <LayoutTemplate className="w-6 h-6 text-indigo-600" />
@@ -107,17 +143,30 @@ const [syntaxTheme, setSyntaxTheme] = useState('dracula');
           <button className="text-sm font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2">
             <LogIn className="w-4 h-4" /> Log In
           </button>
-          <button 
-            onClick={exportAsPDFCarousel}
-            disabled={isExporting || slides.length === 0}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {isExporting ? 'Building PDF...' : 'Download Carousel PDF'}
-          </button>
+          
+          <div className="flex items-center gap-2 pl-4 border-l border-slate-200">
+            {/* PDF Download Button */}
+            <button 
+              onClick={exportAsPDFCarousel}
+              disabled={isExporting || isExportingImages || slides.length === 0}
+              className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              {isExporting ? 'Building PDF...' : 'PDF'}
+            </button>
+            
+            {/* ZIP Download Button */}
+            <button 
+              onClick={exportAsImagesZip}
+              disabled={isExporting || isExportingImages || slides.length === 0}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isExportingImages ? <Loader2 className="w-4 h-4 animate-spin" /> : <Images className="w-4 h-4" />}
+              {isExportingImages ? 'Zipping...' : 'Images (ZIP)'}
+            </button>
+          </div>
         </div>
       </header>
-
       <main className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
         <aside className="w-96 bg-white border-r border-slate-200 flex flex-col overflow-y-auto">
