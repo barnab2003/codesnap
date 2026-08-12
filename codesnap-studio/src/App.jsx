@@ -7,12 +7,47 @@ import { splitCodeIntoSlides } from './utils/splitCode';
 import SlideCard from './components/SlideCard';
 
 const THEME_BACKGROUNDS = {
-  minimalist: 'bg-slate-100',
-  glassmorphism: 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500',
-  brutalist: 'bg-[#FFDF00]',
-  cyberpunk: 'bg-slate-950 bg-[linear-gradient(rgba(0,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px]',
-  y2k: 'bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-yellow-200',
-  claymorphism: 'bg-[#e0e5ec]',
+  /* Minimalist */
+  'minimalist-1': 'bg-slate-100',
+  'minimalist-2': 'bg-zinc-900',
+  'minimalist-3': 'bg-blue-100',
+  'minimalist-4': 'bg-[#f4ebd8]', // Sepia
+  'minimalist-5': 'bg-[linear-gradient(45deg,#e2e8f0_25%,transparent_25%,transparent_75%,#e2e8f0_75%,#e2e8f0),linear-gradient(45deg,#e2e8f0_25%,transparent_25%,transparent_75%,#e2e8f0_75%,#e2e8f0)] bg-[length:20px_20px] bg-[position:0_0,10px_10px] bg-slate-50',
+  
+  /* Glassmorphism */
+  'glass-1': 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500',
+  'glass-2': 'bg-gradient-to-br from-blue-200 via-indigo-100 to-cyan-200',
+  'glass-3': 'bg-gradient-to-tr from-fuchsia-900 to-violet-800',
+  'glass-4': 'bg-gradient-to-br from-teal-500 to-cyan-700',
+  'glass-5': 'bg-gradient-to-br from-rose-500 to-orange-400',
+
+  /* Brutalist */
+  'brutal-1': 'bg-[#FFDF00]',
+  'brutal-2': 'bg-blue-600',
+  'brutal-3': 'bg-orange-500',
+  'brutal-4': 'bg-lime-400',
+  'brutal-5': 'bg-red-600',
+
+  /* Cyberpunk */
+  'cyber-1': 'bg-slate-950 bg-[linear-gradient(rgba(0,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px]',
+  'cyber-2': 'bg-black bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-green-900 to-black',
+  'cyber-3': 'bg-zinc-950 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(239,68,68,0.1)_10px,rgba(239,68,68,0.1)_20px)]',
+  'cyber-4': 'bg-indigo-950',
+  'cyber-5': 'bg-black',
+
+  /* Y2K Retro */
+  'y2k-1': 'bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-yellow-200',
+  'y2k-2': 'bg-gradient-to-br from-pink-300 to-teal-300',
+  'y2k-3': 'bg-gradient-to-b from-sky-300 to-white',
+  'y2k-4': 'bg-gradient-to-tr from-orange-400 to-purple-500',
+  'y2k-5': 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-fuchsia-100 via-cyan-100 to-yellow-100',
+
+  /* Claymorphism */
+  'clay-1': 'bg-[#e0e5ec]',
+  'clay-2': 'bg-[#ffd3b6]',
+  'clay-3': 'bg-[#a8e6cf]',
+  'clay-4': 'bg-[#2d3748]',
+  'clay-5': 'bg-[#dcd3ff]',
 };
 
 export default function App() {
@@ -20,7 +55,7 @@ export default function App() {
   const [language, setLanguage] = useState('javascript');
   const [linesPerSlide, setLinesPerSlide] = useState(12);
   
-  const [theme, setTheme] = useState('glassmorphism');
+  const [theme, setTheme] = useState('glass-1'); // Initialize with new naming convention
   const [frame, setFrame] = useState('macos');
   const [padding, setPadding] = useState(48);
   const [fontSize, setFontSize] = useState(18);
@@ -118,17 +153,53 @@ const [syntaxTheme, setSyntaxTheme] = useState('dracula');
             <div className="space-y-4">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Theme & Style</h2>
               
-              {/* Outer Wrapper Theme Grid */}
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {[
-                  { id: 'minimalist', name: 'Minimalist' }, { id: 'glassmorphism', name: 'Glass' },
-                  { id: 'brutalist', name: 'Brutalist', pro: true }, { id: 'cyberpunk', name: 'Cyberpunk', pro: true },
-                  { id: 'y2k', name: 'Y2K Retro', pro: true }, { id: 'claymorphism', name: 'Clay', pro: true }
-                ].map((t) => (
-                  <button key={t.id} onClick={() => setTheme(t.id)} className={`relative p-2 text-xs font-medium rounded-lg border text-left transition-all ${theme === t.id ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}>
-                    {t.name} {t.pro && <Crown className="w-3 h-3 absolute top-2 right-2 text-amber-500" />}
-                  </button>
-                ))}
+              {/* Outer Wrapper Theme Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Canvas Theme</label>
+                <select value={theme} onChange={(e) => setTheme(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                  <optgroup label="Minimalist (Free)">
+                    <option value="minimalist-1">Minimalist 1: Classic</option>
+                    <option value="minimalist-2">Minimalist 2: Dark</option>
+                    <option value="minimalist-3">Minimalist 3: Blueprint</option>
+                    <option value="minimalist-4">Minimalist 4: Sepia</option>
+                    <option value="minimalist-5">Minimalist 5: Wireframe</option>
+                  </optgroup>
+                  <optgroup label="Glassmorphism (Free)">
+                    <option value="glass-1">Glass 1: Dark Frost</option>
+                    <option value="glass-2">Glass 2: Light Frost</option>
+                    <option value="glass-3">Glass 3: Amethyst</option>
+                    <option value="glass-4">Glass 4: Deep Ocean</option>
+                    <option value="glass-5">Glass 5: Rose</option>
+                  </optgroup>
+                  <optgroup label="Brutalist (Pro)">
+                    <option value="brutal-1">Brutalist 1: Classic Yellow</option>
+                    <option value="brutal-2">Brutalist 2: Pop Pink</option>
+                    <option value="brutal-3">Brutalist 3: Cyan Burst</option>
+                    <option value="brutal-4">Brutalist 4: Hacker Lime</option>
+                    <option value="brutal-5">Brutalist 5: Lavender Red</option>
+                  </optgroup>
+                  <optgroup label="Cyberpunk (Pro)">
+                    <option value="cyber-1">Cyber 1: Neon Pink</option>
+                    <option value="cyber-2">Cyber 2: Toxic Green</option>
+                    <option value="cyber-3">Cyber 3: Alert Red</option>
+                    <option value="cyber-4">Cyber 4: Synthwave</option>
+                    <option value="cyber-5">Cyber 5: High Voltage</option>
+                  </optgroup>
+                  <optgroup label="Y2K Retro (Pro)">
+                    <option value="y2k-1">Y2K 1: Silver Metal</option>
+                    <option value="y2k-2">Y2K 2: Bubblegum</option>
+                    <option value="y2k-3">Y2K 3: Frutiger Aero</option>
+                    <option value="y2k-4">Y2K 4: Sunset</option>
+                    <option value="y2k-5">Y2K 5: Holographic</option>
+                  </optgroup>
+                  <optgroup label="Claymorphism (Pro)">
+                    <option value="clay-1">Clay 1: Standard Gray</option>
+                    <option value="clay-2">Clay 2: Peach</option>
+                    <option value="clay-3">Clay 3: Mint</option>
+                    <option value="clay-4">Clay 4: Midnight</option>
+                    <option value="clay-5">Clay 5: Lilac</option>
+                  </optgroup>
+                </select>
               </div>
 
               {/* NEW: Syntax Theme Dropdown (VS Code Themes) */}
