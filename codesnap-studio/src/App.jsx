@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useState, useMemo, useEffect } from 'react';
-import { Download, LayoutTemplate, LogIn, Loader2, Crown, FileText, Images } from 'lucide-react';
+import { Download, LayoutTemplate, LogIn, LogOut, Loader2, Crown, FileText, Images } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import JSZip from 'jszip';
@@ -189,19 +189,34 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
       {/* Header */}
+      {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 shadow-sm z-10 shrink-0">
         <div className="flex items-center gap-2">
           <LayoutTemplate className="w-6 h-6 text-indigo-600" />
           <h1 className="text-xl font-bold tracking-tight">CodeSnap Studio <span className="text-sm font-normal text-slate-400">| Carousel Generator</span></h1>
         </div>
+        
         <div className="flex items-center gap-4">
-          {/* Dynamic Auth Button */}
+          {/* Dynamic Auth & Monetization Button */}
           {isAuthLoading ? (
             <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
           ) : session ? (
             <div className="flex items-center gap-3">
-              {isPro && <span className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md"><Crown className="w-3 h-3" /> PRO</span>}
-              <button onClick={handleLogout} className="text-sm font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2">
+              {isPro ? (
+                <span className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                  <Crown className="w-3 h-3" /> PRO
+                </span>
+              ) : (
+                <a 
+                  href={`https://buy.stripe.com/test_your_link_here?client_reference_id=${session.user.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 px-3 py-1.5 rounded-md transition-all shadow-sm"
+                >
+                  <Crown className="w-4 h-4" /> Upgrade to Pro
+                </a>
+              )}
+              <button onClick={handleLogout} className="text-sm font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2 ml-2">
                 <LogOut className="w-4 h-4" /> Log Out
               </button>
             </div>
@@ -219,7 +234,7 @@ export default function App() {
               className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-              {isExporting ? 'Building PDF...' : 'PDF'}
+              {isExporting ? 'Building...' : 'PDF'}
             </button>
             
             {/* ZIP Download Button */}
@@ -229,7 +244,7 @@ export default function App() {
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isExportingImages ? <Loader2 className="w-4 h-4 animate-spin" /> : <Images className="w-4 h-4" />}
-              {isExportingImages ? 'Zipping...' : 'Images (ZIP)'}
+              {isExportingImages ? 'Zipping...' : 'Images'}
             </button>
           </div>
         </div>
