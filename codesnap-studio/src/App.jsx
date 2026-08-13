@@ -1,11 +1,12 @@
 // src/App.jsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Download, LayoutTemplate, LogIn, Loader2, Crown, FileText, Images } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import JSZip from 'jszip';
 import { splitCodeIntoSlides } from './utils/splitCode';
 import SlideCard from './components/SlideCard';
+import { supabase } from './lib/supabase';
 
 const THEME_BACKGROUNDS = {
   /* Minimalist */
@@ -64,10 +65,64 @@ export default function App() {
   const [watermarkOpacity, setWatermarkOpacity] = useState(70);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingImages, setIsExportingImages] = useState(false);
-const [syntaxTheme, setSyntaxTheme] = useState('dracula');
+  const [syntaxTheme, setSyntaxTheme] = useState('dracula');
   // Derive slides array automatically when code or slider changes
   const slides = useMemo(() => splitCodeIntoSlides(code, linesPerSlide), [code, linesPerSlide]);
+  const [session, setSession] = useState(null);
+  const [isPro, setIsPro] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
+  useEffect(() => {
+    // Check for active session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchUserProfile(session.user.id);
+      else setIsAuthLoading(false);
+    });
+
+    // Listen for auth changes (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setIsPro(false);
+        setIsAuthLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fetch the user's Pro status from our custom table
+  const fetchUserProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('is_pro')
+        .eq('id', userId)
+        .single();
+        
+      if (data) setIsPro(data.is_pro);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    // Using GitHub OAuth for seamless developer login
+    await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: window.location.origin }
+    });
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setTheme('glass-1'); // Kick them back to a free theme on logout
+  };
   const exportAsPDFCarousel = async () => {
     setIsExporting(true);
     try {
@@ -140,9 +195,21 @@ const [syntaxTheme, setSyntaxTheme] = useState('dracula');
           <h1 className="text-xl font-bold tracking-tight">CodeSnap Studio <span className="text-sm font-normal text-slate-400">| Carousel Generator</span></h1>
         </div>
         <div className="flex items-center gap-4">
-          <button className="text-sm font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2">
-            <LogIn className="w-4 h-4" /> Log In
-          </button>
+          {/* Dynamic Auth Button */}
+          {isAuthLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+          ) : session ? (
+            <div className="flex items-center gap-3">
+              {isPro && <span className="flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md"><Crown className="w-3 h-3" /> PRO</span>}
+              <button onClick={handleLogout} className="text-sm font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2">
+                <LogOut className="w-4 h-4" /> Log Out
+              </button>
+            </div>
+          ) : (
+            <button onClick={handleLogin} className="text-sm font-medium text-slate-600 hover:text-slate-900 flex items-center gap-2">
+              <LogIn className="w-4 h-4" /> Log In with GitHub
+            </button>
+          )}
           
           <div className="flex items-center gap-2 pl-4 border-l border-slate-200">
             {/* PDF Download Button */}
@@ -205,7 +272,11 @@ const [syntaxTheme, setSyntaxTheme] = useState('dracula');
               {/* Outer Wrapper Theme Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Canvas Theme</label>
-                <select value={theme} onChange={(e) => setTheme(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                <select 
+                  value={theme} 
+                  onChange={(e) => setTheme(e.target.value)} 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                >
                   <optgroup label="Minimalist (Free)">
                     <option value="minimalist-1">Minimalist 1: Classic</option>
                     <option value="minimalist-2">Minimalist 2: Dark</option>
@@ -220,28 +291,30 @@ const [syntaxTheme, setSyntaxTheme] = useState('dracula');
                     <option value="glass-4">Glass 4: Deep Ocean</option>
                     <option value="glass-5">Glass 5: Rose</option>
                   </optgroup>
-                  <optgroup label="Brutalist (Pro)">
+                  
+                  {/* PRO THEMES - Locked if not pro */}
+                  <optgroup label="Brutalist (Pro) 👑" disabled={!isPro}>
                     <option value="brutal-1">Brutalist 1: Classic Yellow</option>
                     <option value="brutal-2">Brutalist 2: Pop Pink</option>
                     <option value="brutal-3">Brutalist 3: Cyan Burst</option>
                     <option value="brutal-4">Brutalist 4: Hacker Lime</option>
                     <option value="brutal-5">Brutalist 5: Lavender Red</option>
                   </optgroup>
-                  <optgroup label="Cyberpunk (Pro)">
+                  <optgroup label="Cyberpunk (Pro) 👑" disabled={!isPro}>
                     <option value="cyber-1">Cyber 1: Neon Pink</option>
                     <option value="cyber-2">Cyber 2: Toxic Green</option>
                     <option value="cyber-3">Cyber 3: Alert Red</option>
                     <option value="cyber-4">Cyber 4: Synthwave</option>
                     <option value="cyber-5">Cyber 5: High Voltage</option>
                   </optgroup>
-                  <optgroup label="Y2K Retro (Pro)">
+                  <optgroup label="Y2K Retro (Pro) 👑" disabled={!isPro}>
                     <option value="y2k-1">Y2K 1: Silver Metal</option>
                     <option value="y2k-2">Y2K 2: Bubblegum</option>
                     <option value="y2k-3">Y2K 3: Frutiger Aero</option>
                     <option value="y2k-4">Y2K 4: Sunset</option>
                     <option value="y2k-5">Y2K 5: Holographic</option>
                   </optgroup>
-                  <optgroup label="Claymorphism (Pro)">
+                  <optgroup label="Claymorphism (Pro) 👑" disabled={!isPro}>
                     <option value="clay-1">Clay 1: Standard Gray</option>
                     <option value="clay-2">Clay 2: Peach</option>
                     <option value="clay-3">Clay 3: Mint</option>
@@ -249,6 +322,7 @@ const [syntaxTheme, setSyntaxTheme] = useState('dracula');
                     <option value="clay-5">Clay 5: Lilac</option>
                   </optgroup>
                 </select>
+                {!isPro && <p className="text-xs text-slate-500 mt-1">Unlock Pro themes with a one-time upgrade.</p>}
               </div>
 
               {/* NEW: Syntax Theme Dropdown (VS Code Themes) */}
